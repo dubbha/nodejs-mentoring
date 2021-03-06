@@ -1,0 +1,22 @@
+{
+  "name": "nodejs-mentoring",
+  "version": "1.0.0",
+  "description": "Node.js mentoring",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dubbha/nodejs-mentoring.git"
+  },
+  "keywords": [
+    "nodejs"
+  ],
+  "author": "Oleksiy Dubovyk",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dubbha/nodejs-mentoring/issues"
+  },
+  "homepage": "https://github.com/dubbha/nodejs-mentoring#readme"
+}
