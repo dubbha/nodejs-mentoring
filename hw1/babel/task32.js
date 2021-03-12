@@ -1,47 +1,57 @@
 import csv from 'csvtojson';
 import fs from 'fs';
-import readline from 'readline';
 import { logErrorIfAny } from './utils';
 
 const dir = __dirname;
 const inputFile = `${dir}/books.csv`;
-const txtOutputFile = `${dir}/books.txt`;
-const jsonOutputFile = `${dir}/books.json`;
+const outputFile = `${dir}/books.json`;
 
-const txtWriteStream = fs.createWriteStream(txtOutputFile).on('error', logErrorIfAny);
-let count = 0;
-csv()
-  .fromFile(inputFile)
-  .subscribe(
-    json => {
-      const { Book, Author, Price } = json;
-      const formattedJson = {
-        book: Book,
-        author: Author,
-        price: Number(Price),
-      };
-      txtWriteStream.write(
-        `${JSON.stringify(formattedJson)}\n`,
-        logErrorIfAny,
-      );
-      count++;
-    },
-    err => console.error(err),
-    () => {
-      const readInterface = readline.createInterface({
-        input: fs.createReadStream(txtOutputFile).on('error', logErrorIfAny),
-      });
-      const jsonWriteStream = fs.createWriteStream(jsonOutputFile).on('error', logErrorIfAny);
+const readStream = fs.createReadStream(inputFile).on('error', logErrorIfAny);
 
-      let curLineNumber = 0;
-      readInterface.on('line', line => {
-        jsonWriteStream.write(
-          `${!curLineNumber ? '[\n' : ''}\t${
-            line
-          }${curLineNumber === count - 1 ? '\n]\n' : ',\n'}`,
-          logErrorIfAny,
-        );
-        curLineNumber++;
-      })
-    },
-  );
+let timer;
+const writeStream = fs.createWriteStream(outputFile)
+  .on('error', logErrorIfAny)
+  .on('close', () => {
+    console.log(`Took ${Math.round(process.hrtime(start)[0])} seconds`);
+    clearInterval(timer);
+  });
+
+const arrayJsonTransform = new Transform({
+  transform(chunk, encoding, callback) {
+    this.push(`${this.isNotAtFirstRow ? ',\n' : '[\n'}  ${chunk.toString('utf-8').trim()}`);
+    this.isNotAtFirstRow = true;
+    callback();
+  },
+  flush(callback) {
+    const isEmpty = (!this.isNotAtFirstRow);
+    this.push(isEmpty ? '[]' : '\n]\n');
+    callback();
+  }
+});
+
+const priceToNumberTransform = new Transform({
+  transform(chunk, encoding, callback) {
+    const { book, author, price } = JSON.parse(chunk.toString('utf-8'));
+    this.push(JSON.stringify({ book, author, price: Number(price) }));
+    callback();
+  },
+})
+
+const start = process.hrtime();
+
+pipeline(
+  readStream,
+  csv({
+    headers: ['book', 'author', 'amount', 'price'],
+    ignoreColumns: /amount/,
+    downstreamFormat: 'line', // ndjson format
+  }),
+  priceToNumberTransform, // takes 1/3 less time without this transform
+  arrayJsonTransform, // https://github.com/Keyang/node-csvtojson/issues/333
+  writeStream,
+  logErrorIfAny,
+);
+
+timer = setInterval(() => {
+  console.log(`${Math.round(process.memoryUsage().heapUsed / 1024 /1024)}M`)
+}, 10000);
