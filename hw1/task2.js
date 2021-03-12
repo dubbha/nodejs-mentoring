@@ -1,23 +1,14 @@
 const csv = require('csvtojson');
-const fs = require('fs');
+const { createReadStream, createWriteStream } = require('fs');
 const { Transform, pipeline } = require('stream');
 const { logErrorIfAny } = require('./utils');
-
 
 const dir = __dirname;
 const filename = process.argv[2] || 'books';
 const inputFile = `${dir}/${filename}.csv`;
 const outputFile = `${dir}/${filename}.json`;
 
-const readStream = fs.createReadStream(inputFile).on('error', logErrorIfAny);
-
-let timer;
-const writeStream = fs.createWriteStream(outputFile)
-  .on('error', logErrorIfAny)
-  .on('close', () => {
-    console.log(`Took ${Math.round(process.hrtime(start)[0])} seconds`);
-    clearInterval(timer);
-  });
+const readStream = createReadStream(inputFile).on('error', logErrorIfAny);
 
 const arrayJsonTransform = new Transform({
   transform(chunk, encoding, callback) {
@@ -41,6 +32,13 @@ const priceToNumberTransform = new Transform({
 })
 
 const start = process.hrtime();
+let timer;
+const writeStream = createWriteStream(outputFile)
+  .on('error', logErrorIfAny)
+  .on('close', () => {
+    console.log(`Took ${Math.round(process.hrtime(start)[0])} seconds`);
+    clearInterval(timer);
+  });
 
 pipeline(
   readStream,
@@ -56,5 +54,7 @@ pipeline(
 );
 
 timer = setInterval(() => {
-  console.log(`${Math.round(process.memoryUsage().heapUsed / 1024 /1024)}M`)
+  const s = Math.round(process.hrtime(start)[0]);
+  const M = Math.round(process.memoryUsage().heapUsed / 1024 /1024);
+  console.log(`${s}s ${M}M`);
 }, 10000);

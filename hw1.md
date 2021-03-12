@@ -8,14 +8,16 @@ npm run task-1-1:watch
 ```
 
 ## Task 1.2
-Using [csvtojson](https://github.com/Keyang/node-csvtojson#csvtojson) v2 [line-by-line processing](https://github.com/Keyang/node-csvtojson/blob/master/docs/csvtojson-v2.md#add-asynchronous-line-by-line-processing-support) to generate JSON-like text file, and then readline, [fs.createReadStream](https://nodejs.org/api/fs.html#fs_fs_createreadstream_path_options) and [fs.createWriteStream](https://nodejs.org/api/fs.html#fs_fs_createwritestream_path_options) to make it a real JSON
+Using [csvtojson](https://github.com/Keyang/node-csvtojson#csvtojson) to generate [NDJSON](http://ndjson.org/) format file, and then [createReadStream](https://nodejs.org/api/fs.html#fs_fs_createreadstream_path_options) and [createWriteStream](https://nodejs.org/api/fs.html#fs_fs_createwritestream_path_options), [pipeline](https://nodejs.org/api/stream.html#stream_stream_pipeline_source_transforms_destination_callback) and [Transform](https://nodejs.org/api/stream.html#stream_class_stream_transform) to make it a real JSON: wrapped in array, no comma after the last line
 ```
 npm run task-1-2
 npm run task-1-2:watch
 ```
-Test for memory leakage on huge data (10KK lines)
+Test for memory leakage on huge data (10KK lines), convert CSV to JSON, then back to CSV again
 ```
-npm run task-1-2:huge
+npm run task-1-2:hugify
+npm run task-1-2:huge:csvtojson
+npm run task-1-2:huge:reverse
 ```
 
 ## Task 1.3

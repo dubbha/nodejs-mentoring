@@ -1,5 +1,6 @@
 import csv from 'csvtojson';
-import fs from 'fs';
+import { createReadStream, createWriteStream } from 'fs';
+import { Transform, pipeline } from 'stream';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { logErrorIfAny } from './utils.js';
@@ -11,15 +12,7 @@ const dir = __dirname;
 const inputFile = `${dir}/books.csv`;
 const outputFile = `${dir}/books.json`;
 
-const readStream = fs.createReadStream(inputFile).on('error', logErrorIfAny);
-
-let timer;
-const writeStream = fs.createWriteStream(outputFile)
-  .on('error', logErrorIfAny)
-  .on('close', () => {
-    console.log(`Took ${Math.round(process.hrtime(start)[0])} seconds`);
-    clearInterval(timer);
-  });
+const readStream = createReadStream(inputFile).on('error', logErrorIfAny);
 
 const arrayJsonTransform = new Transform({
   transform(chunk, encoding, callback) {
@@ -42,7 +35,7 @@ const priceToNumberTransform = new Transform({
   },
 })
 
-const start = process.hrtime();
+const writeStream = createWriteStream(outputFile).on('error', logErrorIfAny)
 
 pipeline(
   readStream,
@@ -56,7 +49,3 @@ pipeline(
   writeStream,
   logErrorIfAny,
 );
-
-timer = setInterval(() => {
-  console.log(`${Math.round(process.memoryUsage().heapUsed / 1024 /1024)}M`)
-}, 10000);
