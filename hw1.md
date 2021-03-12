@@ -13,6 +13,10 @@ Using [csvtojson](https://github.com/Keyang/node-csvtojson#csvtojson) v2 [line-b
 npm run task-1-2
 npm run task-1-2:watch
 ```
+Test for memory leakage on huge data (10KK lines)
+```
+npm run task-1-2:huge
+```
 
 ## Task 1.3
 
