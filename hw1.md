@@ -40,7 +40,6 @@ npm run task-1-3-2:babel:prod
 ```
 
 ### Using ECMAScript Modules
-
 Node.js fully supports ECMAScript modules now.
 <br>[Stability: 1 - Experimental](https://nodejs.org/dist/latest-v14.x/docs/api/esm.html#esm_modules_ecmascript_modules) in **v14**
 <br>[Stability: 2 - Stable](https://nodejs.org/api/esm.html#esm_modules_ecmascript_modules) in **v15**
@@ -48,3 +47,22 @@ Node.js fully supports ECMAScript modules now.
 npm run task-1-3-1:esm
 npm run task-1-3-2:esm
 ```
+
+### Using TypeScript
+Using [ts-node](https://github.com/TypeStrong/ts-node#readme) (dev, ts-node can be used in prod [with --transpile-only](https://github.com/TypeStrong/ts-node/issues/104) but has a bigger memory footprint comparing to node running a pre-transpiled code)
+```
+npm run task-1-3-1:ts:dev
+npm run task-1-3-2:ts:dev
+npm run task-1-3-2:ts:dev:hugify
+npm run task-1-3-2:ts:dev:huge:csvtojson
+npm run task-1-3-2:ts:dev:huge:reverse
+```
+Transpile with tsc, run with node (prod ready, also: [babel vs tsc for typescript](https://www.typescriptlang.org/docs/handbook/babel-with-typescript.html#babel-vs-tsc-for-typescript))
+```
+npm run task-1-3-1:ts:prod
+npm run task-1-3-2:ts:prod
+npm run task-1-3-2:ts:prod:huge:csvtojson
+npm run task-1-3-2:ts:prod:huge:reverse
+```
+
+
