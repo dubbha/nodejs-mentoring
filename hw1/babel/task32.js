@@ -4,8 +4,9 @@ import { Transform, pipeline } from 'stream';
 import { logErrorIfAny } from './utils';
 
 const dir = __dirname;
-const inputFile = `${dir}/books.csv`;
-const outputFile = `${dir}/books.json`;
+const filename = process.argv[2] || 'books';
+const inputFile = `${dir}/${filename}.csv`;
+const outputFile = `${dir}/${filename}.json`;
 
 const readStream = createReadStream(inputFile).on('error', logErrorIfAny);
 
