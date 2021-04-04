@@ -1,4 +1,10 @@
 # Homework 1
+Run the below commands from within the `hw1` directory
+```
+[/] cd hw1
+[/hw1] npm i
+[/hw1] npm run task-1-1
+```
 
 ## Task 1.1
 Using [readline](https://nodejs.org/api/readline.html) to read line-by-line, [process.stdout](https://nodejs.org/api/process.html#process_process_stdout) to write

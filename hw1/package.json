@@ -1,0 +1,46 @@
+{
+  "scripts": {
+    "task-1-1": "node task1",
+    "task-1-1:watch": "nodemon task1",
+    "task-1-2": "node task2",
+    "task-1-2:watch": "nodemon task2 --watch hw1 --ext js,csv",
+    "task-1-2:hugify": "node hugify",
+    "task-1-2:huge:csvtojson": "node task2 huge",
+    "task-1-2:huge:reverse": "node task2.reverse huge",
+    "task-1-3-1:babel:dev": "babel-node babel/task31",
+    "task-1-3-1:babel:dev:watch": "nodemon --exec babel-node babel/task31",
+    "task-1-3-1:babel:prod": "cd babel && babel task31.js utils.js -d dist && node dist/task31",
+    "task-1-3-2:babel:dev": "babel-node babel/task32",
+    "task-1-3-2:babel:dev:watch": "nodemon --exec babel-node babel/task32 --watch babel --ext js,csv",
+    "task-1-3-2:babel:prod": "cd babel && babel task32.js utils.js -d dist && node dist/task32 ../books",
+    "task-1-3-1:esm": "node esm/task31",
+    "task-1-3-2:esm": "node esm/task32",
+    "task-1-3-1:ts:dev": "ts-node ts/task31",
+    "task-1-3-1:ts:prod": "cd ts && tsc && node dist/task31",
+    "task-1-3-2:ts:dev": "cd ts && ts-node task32",
+    "task-1-3-2:ts:prod": "cd ts && tsc && node dist/task32 ../books",
+    "task-1-3-2:ts:dev:hugify": "ts-node ts/hugify",
+    "task-1-3-2:ts:dev:huge:csvtojson": "cd ts && ts-node task32 huge",
+    "task-1-3-2:ts:dev:huge:reverse": "cd ts && ts-node task32.reverse huge",
+    "task-1-3-2:ts:prod:huge:csvtojson": "cd ts && tsc && node dist/task32 ../huge",
+    "task-1-3-2:ts:prod:huge:reverse": "cd ts && tsc && node dist/task32.reverse ../huge"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.13.0",
+    "@babel/core": "^7.13.8",
+    "@babel/node": "^7.13.0",
+    "@babel/preset-env": "^7.13.9",
+    "@types/node": "^14.14.34",
+    "nodemon": "^2.0.7",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.2.3"
+  },
+  "dependencies": {
+    "csvtojson": "^2.0.10"
+  },
+  "babel": {
+    "presets": [
+      "@babel/preset-env"
+    ]
+  }
+}
