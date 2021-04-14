@@ -10,7 +10,7 @@ const validationError = (message: string | string[]) => ({
   error: 'Bad Request',
 });
 
-describe('AppController (e2e)', () => {
+describe('Users (e2e)', () => {
   let app: INestApplication;
 
   beforeEach(async () => {

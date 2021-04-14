@@ -1,18 +1,35 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { v4 as uuidv4 } from 'uuid';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository, Not, ILike } from 'typeorm';
 import { UsersService } from './users.service';
-
-jest.mock('uuid');
+import { User } from './entities/user.entity';
 
 describe('UsersService', () => {
   let service: UsersService;
+  const repository = {
+    find: jest.fn(),
+    findOne: jest.fn(),
+    save: jest.fn(),
+    update: jest.fn(),
+    softDelete: jest.fn(),
+  } as Partial<Repository<User>>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [UsersService],
+      providers: [
+        UsersService,
+        {
+          provide: getRepositoryToken(User),
+          useValue: repository,
+        },
+      ],
     }).compile();
 
     service = module.get<UsersService>(UsersService);
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
   });
 
   it('should be defined', () => {
@@ -23,100 +40,52 @@ describe('UsersService', () => {
   const defaultUser = { id, login: 'login', password: 'password', age: 20 };
 
   it('should create user', () => {
-    uuidv4.mockImplementation(() => id);
     service.create(defaultUser);
-    expect(service.findOne(id)).toEqual({
-      ...defaultUser,
-      id,
-      isDeleted: false,
-    });
+    expect(repository.save).toBeCalledWith(defaultUser);
   });
 
   it('should update user with a partial DTO', () => {
-    uuidv4.mockImplementation(() => id);
-    service.create(defaultUser);
-    service.update(id, { login: 'login2', age: 22 });
-    expect(service.findOne(id)).toEqual({
-      ...defaultUser,
-      login: 'login2',
-      age: 22,
-      isDeleted: false,
-    });
+    const dto = { login: 'login2', age: 22 };
+    service.update(id, dto);
+    expect(repository.update).toBeCalledWith({ id }, dto);
   });
 
   it('should remove user softly', () => {
-    uuidv4.mockImplementation(() => id);
-    service.create(defaultUser);
     service.remove(id);
-    expect(service.findOne(id)).toEqual({
-      ...defaultUser,
-      isDeleted: true,
+    expect(repository.softDelete).toBeCalledWith(id);
+  });
+
+  it('should find all non-deleted users sorted by login', () => {
+    service.findAll();
+    expect(repository.find).toBeCalledWith({
+      order: { login: 'ASC' },
     });
   });
 
-  it('should find all non-deleted users sorted by login, not including isDeleted fields', () => {
-    const id2 = '9699ee27-68e6-4835-81dc-d8803e1984ad';
-    const id3 = '6b127d42-31c4-430d-945a-bcb0f49056ac';
-
-    uuidv4.mockImplementationOnce(() => id);
-    uuidv4.mockImplementationOnce(() => id2);
-    uuidv4.mockImplementationOnce(() => id3);
-
-    service.create(defaultUser);
-    service.create({ ...defaultUser, login: 'login2' });
-    service.create({ ...defaultUser, login: '1login' });
-
-    expect(service.findAll()).toEqual([
-      { ...defaultUser, login: '1login', id: id3 },
-      { ...defaultUser, login: 'login', id: id },
-      { ...defaultUser, login: 'login2', id: id2 },
-    ]);
-  });
-
   it('should limit the number of search results', () => {
-    const id2 = '9699ee27-68e6-4835-81dc-d8803e1984ad';
-    const id3 = '6b127d42-31c4-430d-945a-bcb0f49056ac';
-
-    uuidv4.mockImplementationOnce(() => id);
-    uuidv4.mockImplementationOnce(() => id2);
-    uuidv4.mockImplementationOnce(() => id3);
-
-    service.create(defaultUser);
-    service.create({ ...defaultUser, login: 'login2' });
-    service.create({ ...defaultUser, login: '1login' });
-
-    expect(service.findAll('log', 2)).toEqual([
-      { ...defaultUser, login: '1login', id: id3 },
-      { ...defaultUser, login: 'login', id: id },
-    ]);
+    service.findAll('log', 2);
+    expect(repository.find).toBeCalledWith({
+      order: { login: 'ASC' },
+      take: 2,
+      where: { login: ILike('%log%') },
+    });
   });
 
   it('should filter results by the loginSubstring', () => {
-    const id2 = '9699ee27-68e6-4835-81dc-d8803e1984ad';
-    const id3 = '6b127d42-31c4-430d-945a-bcb0f49056ac';
-
-    uuidv4.mockImplementationOnce(() => id);
-    uuidv4.mockImplementationOnce(() => id2);
-    uuidv4.mockImplementationOnce(() => id3);
-
-    service.create(defaultUser);
-    service.create({ ...defaultUser, login: 'login2' });
-    service.create({ ...defaultUser, login: '1login' });
-
-    expect(service.findAll('1lo')).toEqual([{ ...defaultUser, login: '1login', id: id3 }]);
+    service.findAll('1lo');
+    expect(repository.find).toBeCalledWith({
+      order: { login: 'ASC' },
+      where: { login: ILike('%1lo%') },
+    });
   });
 
-  it('should find user by login', async () => {
-    uuidv4.mockImplementationOnce(() => id);
-    service.create(defaultUser);
-    const user = await service.findOneByLogin('login');
-    expect(user).toEqual({ ...defaultUser, login: 'login', id, isDeleted: false });
+  it('should find user by login', () => {
+    service.findOneByLogin('login');
+    expect(repository.findOne).toBeCalledWith({ login: 'login' });
   });
 
-  it('should find user by login, expect for user with the provided id', async () => {
-    uuidv4.mockImplementationOnce(() => id);
-    service.create(defaultUser);
-    const user = await service.findOneByLogin('login', id);
-    expect(user).toBeUndefined();
+  it('should find user by login, expect for user with the provided id', () => {
+    service.findOneByLogin('login', id);
+    expect(repository.findOne).toBeCalledWith({ login: 'login', id: Not(id) });
   });
 });
