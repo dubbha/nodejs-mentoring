@@ -5,16 +5,25 @@ import { UsersService } from './users.service';
 
 describe('UsersController', () => {
   let controller: UsersController;
-  let service: UsersService;
+  const service = {
+    create: jest.fn(),
+    findAll: jest.fn(),
+    findOne: jest.fn(),
+    findOneByLogin: jest.fn(),
+    update: jest.fn(),
+    remove: jest.fn(),
+  } as Partial<UsersService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UsersController],
       providers: [UsersService],
-    }).compile();
+    })
+      .overrideProvider(UsersService)
+      .useValue(service)
+      .compile();
 
     controller = module.get<UsersController>(UsersController);
-    service = module.get<UsersService>(UsersService);
   });
 
   const id = '123e4567-e89b-12d3-a456-426614174000';
@@ -28,7 +37,6 @@ describe('UsersController', () => {
     it('should create user', () => {
       const { login, password, age } = defaultUser;
       const dto = { login, password, age };
-      jest.spyOn(service, 'create');
 
       controller.create(dto);
       expect(service.create).toBeCalledWith(dto);
@@ -37,28 +45,24 @@ describe('UsersController', () => {
 
   describe('findAll', () => {
     it('should pass loginSubtring and limit if provided', () => {
-      jest.spyOn(service, 'findAll');
-
       controller.findAll({ loginSubstring: 'sub', limit: 12 });
       expect(service.findAll).toBeCalledWith('sub', 12);
     });
 
     it('should call service with loginSubtring and limit undefined if not provided', () => {
-      jest.spyOn(service, 'findAll');
-
       controller.findAll({});
       expect(service.findAll).toBeCalledWith(undefined, undefined);
     });
   });
 
   describe('findOne', () => {
-    it('should return user by id if found', () => {
-      jest.spyOn(service, 'findOne').mockImplementation(() => defaultUser);
-      expect(controller.findOne({ id })).toBe(defaultUser);
+    it('should return user by id if found', async () => {
+      (service.findOne as jest.Mock).mockImplementation(() => Promise.resolve(defaultUser));
+      expect(await controller.findOne({ id })).toBe(defaultUser);
     });
 
     it('should throw NotFoundException if user not found', () => {
-      jest.spyOn(service, 'findOne').mockImplementation(() => undefined);
+      (service.findOne as jest.Mock).mockImplementation(() => undefined);
       expect(() => controller.findOne({ id })).toThrow(NotFoundException);
     });
   });
@@ -68,7 +72,6 @@ describe('UsersController', () => {
       const params = { id };
       const { age } = defaultUser;
       const dto = { age };
-      jest.spyOn(service, 'update');
 
       await controller.update(params, dto);
       expect(service.update).toBeCalledWith(id, dto);
@@ -78,8 +81,7 @@ describe('UsersController', () => {
       const params = { id };
       const { age, login } = defaultUser;
       const dto = { age, login };
-      jest.spyOn(service, 'findOneByLogin').mockImplementation(() => Promise.resolve(undefined));
-      jest.spyOn(service, 'update');
+      (service.findOneByLogin as jest.Mock).mockImplementation(() => Promise.resolve(undefined));
 
       await controller.update(params, dto);
       expect(service.findOneByLogin).toBeCalledWith('login', id);
@@ -90,12 +92,9 @@ describe('UsersController', () => {
       const params = { id };
       const { age, login } = defaultUser;
       const dto = { age, login };
-      jest
-        .spyOn(service, 'findOneByLogin')
-        .mockImplementation(() =>
-          Promise.resolve({ ...defaultUser, id: '9699ee27-68e6-4835-81dc-d8803e1984ad' }),
-        );
-      jest.spyOn(service, 'update');
+      (service.findOneByLogin as jest.Mock).mockImplementation(() =>
+        Promise.resolve({ ...defaultUser, id: '9699ee27-68e6-4835-81dc-d8803e1984ad' }),
+      );
 
       await expect(controller.update(params, dto)).rejects.toThrow(BadRequestException);
     });
@@ -104,7 +103,6 @@ describe('UsersController', () => {
   describe('remove', () => {
     it('should pass id of the user to be removed', () => {
       const params = { id };
-      jest.spyOn(service, 'remove');
 
       controller.remove(params);
       expect(service.remove).toBeCalledWith(params.id);

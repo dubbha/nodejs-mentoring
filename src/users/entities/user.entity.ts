@@ -8,12 +8,12 @@ export class User {
   @Column()
   login: string;
 
-  @Column()
+  @Column({ select: false })
   password: string;
 
   @Column()
   age: number;
 
-  @DeleteDateColumn()
+  @DeleteDateColumn({ select: false })
   deletedAt?: Date;
 }
