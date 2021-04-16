@@ -1,8 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import * as request from 'supertest';
 import { useContainer } from 'class-validator';
-import { UsersModule } from './../src/users/users.module';
+import { UsersController } from '../src/users/users.controller';
+import { UsersService } from '../src/users/users.service';
+import { LoginNotUsedConstraint } from '../src/users/validators/login-not-used';
+import { User } from '../src/users/entities/user.entity';
 
 const validationError = (message: string | string[]) => ({
   statusCode: 400,
@@ -12,20 +17,42 @@ const validationError = (message: string | string[]) => ({
 
 describe('Users (e2e)', () => {
   let app: INestApplication;
+  const repository = {
+    find: jest.fn(),
+    findOne: jest.fn(),
+    save: jest.fn(),
+    update: jest.fn(),
+    softDelete: jest.fn(),
+  } as Partial<Repository<User>>;
 
-  beforeEach(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [UsersModule],
+  beforeAll(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [],
+      controllers: [UsersController],
+      providers: [
+        UsersService,
+        LoginNotUsedConstraint,
+        {
+          provide: getRepositoryToken(User),
+          useValue: repository,
+        },
+      ],
     }).compile();
 
-    app = moduleFixture.createNestApplication();
+    app = module.createNestApplication();
     app.useGlobalPipes(new ValidationPipe());
-    useContainer(app.select(UsersModule), { fallbackOnErrors: true });
+
+    useContainer(app, { fallbackOnErrors: true });
     await app.init();
+  });
+
+  afterAll(async () => {
+    await app.close();
   });
 
   describe('GET /users', () => {
     it('should return empty users list', () => {
+      jest.spyOn(repository, 'find').mockImplementationOnce(() => Promise.resolve([]));
       return request(app.getHttpServer()).get('/users').expect(200).expect([]);
     });
 
