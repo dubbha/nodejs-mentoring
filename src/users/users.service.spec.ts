@@ -39,9 +39,28 @@ describe('UsersService', () => {
   const id = '123e4567-e89b-12d3-a456-426614174000';
   const defaultUser = { id, login: 'login', password: 'password', age: 20 };
 
-  it('should create user', () => {
-    service.create(defaultUser);
-    expect(repository.save).toBeCalledWith(defaultUser);
+  it('should create user', async () => {
+    jest.spyOn(repository, 'save').mockReturnValue(
+      Promise.resolve({
+        ...defaultUser,
+        password: 'hashedPasswordToBeOmittedFromResponse',
+        deletedAt: null,
+      }),
+    );
+    const dto = {
+      login: defaultUser.login,
+      password: defaultUser.password,
+      age: defaultUser.age,
+    };
+    expect(await service.create(dto)).toEqual({
+      login: dto.login,
+      age: dto.age,
+      id: defaultUser.id,
+    });
+    expect(repository.save).toBeCalledWith({
+      ...dto,
+      password: expect.stringContaining('$argon2id$'),
+    });
   });
 
   it('should update user with a partial DTO', () => {
