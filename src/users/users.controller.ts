@@ -9,10 +9,12 @@ import {
   Query,
   BadRequestException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { LoginDto } from './dto/login.dto';
 import { FindOneParams } from './params/find-one';
 import { UpdateParams } from './params/update';
 import { RemoveParams } from './params/remove';
@@ -55,5 +57,14 @@ export class UsersController {
   @Delete(':id')
   remove(@Param() { id }: RemoveParams) {
     return this.usersService.remove(id);
+  }
+
+  @Post('login')
+  async login(@Body() loginDto: LoginDto) {
+    const success = await this.usersService.login(loginDto);
+    if (!success) {
+      throw new UnauthorizedException(`username or password is incorrect`);
+    }
+    return { status: 'OK' };
   }
 }
