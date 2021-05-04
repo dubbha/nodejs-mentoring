@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository, Not, ILike } from 'typeorm';
 import { UsersService } from './users.service';
+import { HashService } from '../core/services';
 import { User } from './entities/user.entity';
 
 describe('UsersService', () => {
@@ -18,6 +19,7 @@ describe('UsersService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UsersService,
+        HashService,
         {
           provide: getRepositoryToken(User),
           useValue: repository,

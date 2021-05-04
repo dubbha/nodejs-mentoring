@@ -7,7 +7,7 @@ import {
   Body,
   Param,
   Query,
-  BadRequestException,
+  ConflictException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -35,8 +35,8 @@ export class UsersController {
   }
 
   @Get(':id')
-  findOne(@Param() { id }: FindOneParams) {
-    const user = this.usersService.findOne(id);
+  async findOne(@Param() { id }: FindOneParams) {
+    const user = await this.usersService.findOne(id);
     if (!user) {
       throw new NotFoundException(`user with id (${id}) not found`);
     }
@@ -48,7 +48,7 @@ export class UsersController {
     const { login } = updateUserDto;
     if (login) {
       if (await this.usersService.findOneByLogin(login, id)) {
-        throw new BadRequestException(`login (${login}) is already used by another user`);
+        throw new ConflictException(`login (${login}) is already used by another user`);
       }
     }
     return this.usersService.update(id, updateUserDto);

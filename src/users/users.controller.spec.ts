@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
@@ -61,9 +61,9 @@ describe('UsersController', () => {
       expect(await controller.findOne({ id })).toBe(defaultUser);
     });
 
-    it('should throw NotFoundException if user not found', () => {
+    it('should throw NotFoundException if user not found', async () => {
       (service.findOne as jest.Mock).mockImplementation(() => undefined);
-      expect(() => controller.findOne({ id })).toThrow(NotFoundException);
+      await expect(controller.findOne({ id })).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -96,7 +96,7 @@ describe('UsersController', () => {
         Promise.resolve({ ...defaultUser, id: '9699ee27-68e6-4835-81dc-d8803e1984ad' }),
       );
 
-      await expect(controller.update(params, dto)).rejects.toThrow(BadRequestException);
+      await expect(controller.update(params, dto)).rejects.toThrow(ConflictException);
     });
   });
 

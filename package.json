@@ -21,7 +21,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "typeorm": "cross-env MIGRATION=true ts-node node_modules/typeorm/cli.js",
     "migration:create": "npm run typeorm migration:create -- -n migration",
-    "migration:generate": "npm run typeorm migration:generate -n migration",
+    "migration:generate": "npm run typeorm migration:generate -- -n migration",
     "migration:run": "npm run typeorm  migration:run",
     "migration:revert": "npm run typeorm  migration:revert"
   },
