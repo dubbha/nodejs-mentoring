@@ -1,21 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not, ILike } from 'typeorm';
-import * as argon2 from 'argon2';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { User } from './entities/user.entity';
-
-// https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
-export const hash = (plain: string) =>
-  argon2.hash(plain, { type: argon2.argon2id, timeCost: 2, memoryCost: 15360 });
+import { HashService } from '../core/services';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
+    @InjectRepository(User) private usersRepository: Repository<User>,
+    private hashService: HashService,
   ) {}
 
   async create(dto: CreateUserDto) {
@@ -23,7 +19,7 @@ export class UsersService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, deletedAt, ...result } = await this.usersRepository.save({
       ...dto,
-      password: await hash(dto.password),
+      password: await this.hashService.hash(dto.password),
     });
     return result;
   }
@@ -42,7 +38,7 @@ export class UsersService {
 
   async update(id: string, dto: UpdateUserDto) {
     const { password } = dto;
-    const partial = password ? { ...dto, password: await hash(password) } : dto;
+    const partial = password ? { ...dto, password: await this.hashService.hash(password) } : dto;
     return this.usersRepository.update({ id }, partial);
   }
 
@@ -65,7 +61,7 @@ export class UsersService {
     });
 
     if (password.startsWith('$argon2id$')) {
-      return await argon2.verify(password, dto.password);
+      return await this.hashService.verify(password, dto.password);
     } else {
       if (password === dto.password) {
         await this.update(id, { password }); // rehash
