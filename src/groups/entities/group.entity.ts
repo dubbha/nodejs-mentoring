@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, JoinTable } from 'typeorm';
 import { User } from '../../users/entities';
-import { Permission } from '../types';
+import { Permission } from '../enums';
 
 @Entity()
 export class Group {
@@ -10,7 +10,7 @@ export class Group {
   @Column({ unique: true })
   name: string;
 
-  @Column('text', { array: true })
+  @Column('enum', { enum: Permission, default: [Permission.READ], array: true })
   permissions: Permission[];
 
   @ManyToMany(() => User, user => user.groups)
