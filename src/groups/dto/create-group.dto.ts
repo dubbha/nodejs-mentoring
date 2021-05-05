@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsArray } from 'class-validator';
-import { Permission } from '../types';
+import { IsString, IsArray, IsEnum } from 'class-validator';
+import { Permission } from '../enums';
 
 export class CreateGroupDto {
   @ApiProperty({ description: 'Name of the group' })
@@ -9,5 +9,6 @@ export class CreateGroupDto {
 
   @ApiProperty({ description: 'Array of permissions' })
   @IsArray()
+  @IsEnum(Permission, { each: true })
   permissions: Permission[];
 }
