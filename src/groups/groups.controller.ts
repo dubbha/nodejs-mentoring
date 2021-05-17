@@ -1,61 +1,64 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Delete,
-  Param,
-  Body,
-  NotFoundException,
-  ConflictException,
-  BadRequestException,
-} from '@nestjs/common';
-import { EntityNotFoundError, ArgumentsError } from '../core/errors';
+import { Controller, Get, Post, Patch, Delete, Param, Body } from '@nestjs/common';
+import { LoggerService } from '../core/services';
+import { rethrowToHttp } from '../core/errors';
 import { GroupsService } from './groups.service';
 import { CreateGroupDto, UpdateGroupDto, AddUsersDto } from './dto';
 import { FindOneParams, UpdateParams, RemoveParams, AddUsersParams } from './params';
 
 @Controller('groups')
 export class GroupsController {
-  constructor(private readonly groupsService: GroupsService) {}
+  constructor(private groupsService: GroupsService, private logger: LoggerService) {
+    logger.setContext(this.constructor.name);
+  }
 
   @Post()
   async create(@Body() dto: CreateGroupDto) {
     try {
       return await this.groupsService.create(dto);
     } catch (e) {
-      throw new ConflictException(e.detail);
+      this.logger.controllerMethodError(e, 'POST /', [dto]);
+      rethrowToHttp(e);
     }
   }
 
   @Get()
-  findAll() {
-    return this.groupsService.findAll();
+  async findAll() {
+    try {
+      return await this.groupsService.findAll();
+    } catch (e) {
+      this.logger.controllerMethodError(e, 'GET /');
+      rethrowToHttp(e);
+    }
   }
 
   @Get(':id')
   async findOne(@Param() { id }: FindOneParams) {
-    const group = await this.groupsService.findOne(id);
-    if (!group) {
-      throw new NotFoundException(`group with id (${id}) not found`);
+    try {
+      return await this.groupsService.findOne(id);
+    } catch (e) {
+      this.logger.controllerMethodError(e, 'POST /:id', [{ id }]);
+      rethrowToHttp(e);
     }
-    return group;
   }
 
   @Patch(':id')
-  update(@Param() { id }: UpdateParams, @Body() dto: UpdateGroupDto) {
-    const { name } = dto;
-    if (name) {
-      if (this.groupsService.findOneByName(name, id)) {
-        throw new ConflictException(`name (${name}) is already used by another group`);
-      }
+  async update(@Param() { id }: UpdateParams, @Body() dto: UpdateGroupDto) {
+    try {
+      return await this.groupsService.update(id, dto);
+    } catch (e) {
+      this.logger.controllerMethodError(e, 'PATCH /:id', [{ id }, dto]);
+      rethrowToHttp(e);
     }
-    return this.groupsService.update(id, dto);
   }
 
   @Delete(':id')
-  remove(@Param() { id }: RemoveParams) {
-    this.groupsService.remove(id);
+  async remove(@Param() { id }: RemoveParams) {
+    try {
+      await this.groupsService.remove(id);
+    } catch (e) {
+      this.logger.controllerMethodError(e, 'DELETE /:id', [{ id }]);
+      rethrowToHttp(e);
+    }
   }
 
   @Post(':id/add-users')
@@ -63,13 +66,8 @@ export class GroupsController {
     try {
       return await this.groupsService.addUsers(id, dto);
     } catch (e) {
-      if (e instanceof EntityNotFoundError) {
-        throw new NotFoundException(e.message);
-      }
-      if (e instanceof ArgumentsError) {
-        throw new BadRequestException(e.message);
-      }
-      throw e;
+      this.logger.controllerMethodError(e, 'POST /:id/add-users', [{ id }, dto]);
+      rethrowToHttp(e);
     }
   }
 }

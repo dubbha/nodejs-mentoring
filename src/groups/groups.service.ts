@@ -1,31 +1,51 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not, getConnection } from 'typeorm';
-import { EntityNotFoundError, ArgumentsError } from '../core/errors';
+import { EntityNotFoundError, ArgumentsError, EntityConflictError } from '../core/errors';
+import { LogMethodCalls } from '../core/decorators';
 import { User } from '../users/entities';
 import { Group } from './entities';
 import { CreateGroupDto, UpdateGroupDto, AddUsersDto } from './dto';
 
 @Injectable()
+@LogMethodCalls()
 export class GroupsService {
   constructor(
     @InjectRepository(Group) private groupsRepository: Repository<Group>,
     @InjectRepository(User) private usersRepository: Repository<User>,
   ) {}
 
-  create(dto: CreateGroupDto) {
-    return this.groupsRepository.save(dto);
+  async create(dto: CreateGroupDto) {
+    try {
+      return await this.groupsRepository.save(dto);
+    } catch (e) {
+      // unique_violation, https://www.postgresql.org/docs/13/errcodes-appendix.html
+      if (e.code === '23505') {
+        throw new EntityConflictError(e.detail);
+      }
+      throw e;
+    }
   }
 
   findAll() {
     return this.groupsRepository.find();
   }
 
-  findOne(id: string) {
-    return this.groupsRepository.findOne({ id });
+  async findOne(id: string) {
+    const group = await this.groupsRepository.findOne({ id });
+    if (!group) {
+      throw new EntityNotFoundError(`group with id (${id}) not found`);
+    }
+    return group;
   }
 
-  update(id: string, dto: UpdateGroupDto) {
+  async update(id: string, dto: UpdateGroupDto) {
+    const { name } = dto;
+    if (name) {
+      if (await this.findOneByName(name, id)) {
+        throw new EntityConflictError(`name (${name}) is already used by another group`);
+      }
+    }
     return this.groupsRepository.update(id, dto);
   }
 
@@ -49,6 +69,7 @@ export class GroupsService {
     const users = (
       await Promise.all(userIds.map(async userId => await this.usersRepository.findOne(userId)))
     ).filter(Boolean);
+
     if (!users.length) {
       throw new ArgumentsError('all user ids are wrong');
     }

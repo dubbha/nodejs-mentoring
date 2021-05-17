@@ -1,13 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not, ILike } from 'typeorm';
+import { HashService } from '../core/services';
+import { LogMethodCalls } from '../core/decorators';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { User } from './entities/user.entity';
-import { HashService } from '../core/services';
+import { EntityNotFoundError, EntityConflictError, UnauthorizedError } from '../core/errors';
 
 @Injectable()
+@LogMethodCalls()
 export class UsersService {
   constructor(
     @InjectRepository(User) private usersRepository: Repository<User>,
@@ -32,12 +35,21 @@ export class UsersService {
     });
   }
 
-  findOne(id: string) {
-    return this.usersRepository.findOne({ id });
+  async findOne(id: string) {
+    const user = await this.usersRepository.findOne({ id });
+    if (!user) {
+      throw new EntityNotFoundError(`user with id (${id}) not found`);
+    }
+    return user;
   }
 
   async update(id: string, dto: UpdateUserDto) {
-    const { password } = dto;
+    const { login, password } = dto;
+    if (login) {
+      if (await this.findOneByLogin(login, id)) {
+        throw new EntityConflictError(`login (${login}) is already used by another user`);
+      }
+    }
     const partial = password ? { ...dto, password: await this.hashService.hash(password) } : dto;
     return this.usersRepository.update({ id }, partial);
   }
@@ -61,13 +73,15 @@ export class UsersService {
     });
 
     if (password.startsWith('$argon2id$')) {
-      return await this.hashService.verify(password, dto.password);
+      if (await this.hashService.verify(password, dto.password)) {
+        return true;
+      }
     } else {
       if (password === dto.password) {
         await this.update(id, { password }); // rehash
         return true;
       }
-      return false;
     }
+    throw new UnauthorizedError('username or password is incorrect');
   }
 }

@@ -65,9 +65,10 @@ describe('UsersService', () => {
     });
   });
 
-  it('should update user with a partial DTO', () => {
+  it('should update user with a partial DTO', async () => {
     const dto = { login: 'login2', age: 22 };
-    service.update(id, dto);
+    jest.spyOn(repository, 'findOne').mockReturnValue(null);
+    await service.update(id, dto);
     expect(repository.update).toBeCalledWith({ id }, dto);
   });
 
