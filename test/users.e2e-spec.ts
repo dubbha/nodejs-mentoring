@@ -6,7 +6,7 @@ import * as request from 'supertest';
 import { useContainer } from 'class-validator';
 import { UsersController } from '../src/users/users.controller';
 import { UsersService } from '../src/users/users.service';
-import { HashService } from '../src/core/services';
+import { HashService, LoggerService } from '../src/core/services';
 import { LoginNotUsedConstraint } from '../src/users/validators/login-not-used';
 import { User } from '../src/users/entities/user.entity';
 
@@ -33,6 +33,7 @@ describe('Users (e2e)', () => {
       providers: [
         UsersService,
         HashService,
+        LoggerService,
         LoginNotUsedConstraint,
         {
           provide: getRepositoryToken(User),

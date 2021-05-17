@@ -1,16 +1,6 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Delete,
-  Body,
-  Param,
-  Query,
-  ConflictException,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
+import { LoggerService } from '../core/services';
+import { rethrowToHttp } from '../core/errors';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -22,49 +12,67 @@ import { FindAllParams } from './params/find-all';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private usersService: UsersService, private logger: LoggerService) {
+    logger.setContext(this.constructor.name);
+  }
 
   @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  async create(@Body() dto: CreateUserDto) {
+    try {
+      return await this.usersService.create(dto);
+    } catch (e) {
+      this.logger.controllerMethodError(e, 'POST /', [dto]);
+      rethrowToHttp(e);
+    }
   }
 
   @Get()
-  findAll(@Query() { loginSubstring, limit }: FindAllParams) {
-    return this.usersService.findAll(loginSubstring, limit);
+  async findAll(@Query() { loginSubstring, limit }: FindAllParams) {
+    try {
+      return await this.usersService.findAll(loginSubstring, limit);
+    } catch (e) {
+      this.logger.controllerMethodError(e, 'GET /', [{ loginSubstring, limit }]);
+      rethrowToHttp(e);
+    }
   }
 
   @Get(':id')
   async findOne(@Param() { id }: FindOneParams) {
-    const user = await this.usersService.findOne(id);
-    if (!user) {
-      throw new NotFoundException(`user with id (${id}) not found`);
+    try {
+      return await this.usersService.findOne(id);
+    } catch (e) {
+      this.logger.controllerMethodError(e, 'GET /:id', [{ id }]);
+      rethrowToHttp(e);
     }
-    return user;
   }
 
   @Patch(':id')
-  async update(@Param() { id }: UpdateParams, @Body() updateUserDto: UpdateUserDto) {
-    const { login } = updateUserDto;
-    if (login) {
-      if (await this.usersService.findOneByLogin(login, id)) {
-        throw new ConflictException(`login (${login}) is already used by another user`);
-      }
+  async update(@Param() { id }: UpdateParams, @Body() dto: UpdateUserDto) {
+    try {
+      return await this.usersService.update(id, dto);
+    } catch (e) {
+      this.logger.controllerMethodError(e, 'PATCH /:id', [{ id }, dto]);
+      rethrowToHttp(e);
     }
-    return this.usersService.update(id, updateUserDto);
   }
 
   @Delete(':id')
-  remove(@Param() { id }: RemoveParams) {
-    return this.usersService.remove(id);
+  async remove(@Param() { id }: RemoveParams) {
+    try {
+      await this.usersService.remove(id);
+    } catch (e) {
+      this.logger.controllerMethodError(e, 'DELETE /:id', [{ id }]);
+      rethrowToHttp(e);
+    }
   }
 
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
-    const success = await this.usersService.login(loginDto);
-    if (!success) {
-      throw new UnauthorizedException(`username or password is incorrect`);
+    try {
+      return await this.usersService.login(loginDto);
+    } catch (e) {
+      this.logger.controllerMethodError(e, 'POST /login', [loginDto]);
+      rethrowToHttp(e);
     }
-    return { status: 'OK' };
   }
 }

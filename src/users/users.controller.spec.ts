@@ -1,10 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, NotFoundException } from '@nestjs/common';
+import { EntityConflictError, EntityNotFoundError } from '../core/errors';
+import { LoggerService } from '../core/services';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
 describe('UsersController', () => {
   let controller: UsersController;
+
   const service = {
     create: jest.fn(),
     findAll: jest.fn(),
@@ -14,13 +17,20 @@ describe('UsersController', () => {
     remove: jest.fn(),
   } as Partial<UsersService>;
 
+  const loggerService = {
+    setContext: jest.fn(),
+    controllerMethodError: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UsersController],
-      providers: [UsersService],
+      providers: [UsersService, LoggerService],
     })
       .overrideProvider(UsersService)
       .useValue(service)
+      .overrideProvider(LoggerService)
+      .useValue(loggerService)
       .compile();
 
     controller = module.get<UsersController>(UsersController);
@@ -62,7 +72,9 @@ describe('UsersController', () => {
     });
 
     it('should throw NotFoundException if user not found', async () => {
-      (service.findOne as jest.Mock).mockImplementation(() => undefined);
+      (service.findOne as jest.Mock).mockImplementation(() =>
+        Promise.reject(new EntityNotFoundError()),
+      );
       await expect(controller.findOne({ id })).rejects.toThrow(NotFoundException);
     });
   });
@@ -77,23 +89,12 @@ describe('UsersController', () => {
       expect(service.update).toBeCalledWith(id, dto);
     });
 
-    it('should check if the new login is already used by another user if login is included in DTO', async () => {
-      const params = { id };
-      const { age, login } = defaultUser;
-      const dto = { age, login };
-      (service.findOneByLogin as jest.Mock).mockImplementation(() => Promise.resolve(undefined));
-
-      await controller.update(params, dto);
-      expect(service.findOneByLogin).toBeCalledWith('login', id);
-      expect(service.update).toBeCalledWith(id, dto);
-    });
-
     it('should throw if the new login is already used by another user', async () => {
       const params = { id };
       const { age, login } = defaultUser;
       const dto = { age, login };
-      (service.findOneByLogin as jest.Mock).mockImplementation(() =>
-        Promise.resolve({ ...defaultUser, id: '9699ee27-68e6-4835-81dc-d8803e1984ad' }),
+      (service.update as jest.Mock).mockImplementation(() =>
+        Promise.reject(new EntityConflictError()),
       );
 
       await expect(controller.update(params, dto)).rejects.toThrow(ConflictException);
