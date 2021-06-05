@@ -9,7 +9,7 @@ describe('GroupsController', () => {
     create: jest.fn(),
     findAll: jest.fn(),
     findOne: jest.fn(),
-    findOneByLogin: jest.fn(),
+    findOneByUsername: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
   } as Partial<GroupsService>;

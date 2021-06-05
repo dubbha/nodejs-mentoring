@@ -14,7 +14,16 @@ export class HttpLogger implements NestMiddleware {
     this.logger.debug(
       `${method} ${baseUrl}${path} called${
         Object.keys(query).length ? `, query: ${JSON.stringify(query)}` : ''
-      }${Object.keys(body).length ? `, body: ${JSON.stringify(body)}` : ''}`,
+      }${
+        Object.keys(body).length
+          ? `, body: ${JSON.stringify(
+              Object.keys(body).reduce(
+                (acc, cur) => ({ ...acc, [cur]: cur.match('password') ? '***' : body[cur] }),
+                {},
+              ),
+            )}`
+          : ''
+      }`,
     );
 
     next();

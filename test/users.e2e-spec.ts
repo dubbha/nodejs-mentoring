@@ -7,7 +7,7 @@ import { useContainer } from 'class-validator';
 import { UsersController } from '../src/users/users.controller';
 import { UsersService } from '../src/users/users.service';
 import { HashService, LoggerService } from '../src/core/services';
-import { LoginNotUsedConstraint } from '../src/users/validators/login-not-used';
+import { UsernameNotUsedConstraint } from '../src/users/validators/username-not-used';
 import { User } from '../src/users/entities/user.entity';
 
 const validationError = (message: string | string[]) => ({
@@ -34,7 +34,7 @@ describe('Users (e2e)', () => {
         UsersService,
         HashService,
         LoggerService,
-        LoginNotUsedConstraint,
+        UsernameNotUsedConstraint,
         {
           provide: getRepositoryToken(User),
           useValue: repository,

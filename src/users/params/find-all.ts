@@ -7,7 +7,7 @@ export class FindAllParams {
   @IsNumberString()
   limit?: number;
 
-  @ApiProperty({ description: 'Login substring to search by', required: false })
+  @ApiProperty({ description: 'Username substring to search by', required: false })
   @IsOptional()
-  loginSubstring?: string;
+  usernameSubstring?: string;
 }

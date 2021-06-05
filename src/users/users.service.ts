@@ -3,11 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not, ILike } from 'typeorm';
 import { HashService } from '../core/services';
 import { LogMethodCalls } from '../core/decorators';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { LoginDto } from './dto/login.dto';
+import { CreateUserDto, UpdateUserDto } from './dto';
 import { User } from './entities/user.entity';
-import { EntityNotFoundError, EntityConflictError, UnauthorizedError } from '../core/errors';
+import { EntityNotFoundError, EntityConflictError } from '../core/errors';
 
 @Injectable()
 @LogMethodCalls()
@@ -27,11 +25,11 @@ export class UsersService {
     return result;
   }
 
-  findAll(loginSubstring?: string, limit?: number) {
+  findAll(usernameSubstring?: string, limit?: number) {
     return this.usersRepository.find({
-      order: { login: 'ASC' },
+      order: { username: 'ASC' },
       ...(limit && { take: limit }),
-      ...(loginSubstring && { where: { login: ILike(`%${loginSubstring}%`) } }),
+      ...(usernameSubstring && { where: { username: ILike(`%${usernameSubstring}%`) } }),
     });
   }
 
@@ -44,10 +42,10 @@ export class UsersService {
   }
 
   async update(id: string, dto: UpdateUserDto) {
-    const { login, password } = dto;
-    if (login) {
-      if (await this.findOneByLogin(login, id)) {
-        throw new EntityConflictError(`login (${login}) is already used by another user`);
+    const { username, password } = dto;
+    if (username) {
+      if (await this.findOneByUsername(username, id)) {
+        throw new EntityConflictError(`username (${username}) is already used by another user`);
       }
     }
     const partial = password ? { ...dto, password: await this.hashService.hash(password) } : dto;
@@ -58,30 +56,30 @@ export class UsersService {
     return this.usersRepository.softDelete(id);
   }
 
-  findOneByLogin(login: string, exceptId?: string): Promise<User> {
+  findOneByUsername(username: string, exceptId?: string): Promise<User> {
     return this.usersRepository.findOne({
-      login,
+      username,
       ...(exceptId && { id: Not(exceptId) }),
     });
   }
 
-  async login(dto: LoginDto) {
+  async validateUser(username: string, password: string) {
     // https://github.com/ranisalt/node-argon2/wiki/Migrating-from-another-hash-function
-    const { password, id } = await this.usersRepository.findOne({
-      where: { login: dto.login },
+    const { password: foundPassword, id } = await this.usersRepository.findOne({
+      where: { username },
       select: ['password', 'id'], // https://github.com/typeorm/typeorm/issues/5816
     });
 
-    if (password.startsWith('$argon2id$')) {
-      if (await this.hashService.verify(password, dto.password)) {
-        return true;
+    if (foundPassword.startsWith('$argon2id$')) {
+      if (await this.hashService.verify(foundPassword, password)) {
+        return await this.usersRepository.findOne(id);
       }
     } else {
-      if (password === dto.password) {
-        await this.update(id, { password }); // rehash
-        return true;
+      if (foundPassword === password) {
+        await this.update(foundPassword, { password }); // rehash
+        return await this.usersRepository.findOne(id);
       }
     }
-    throw new UnauthorizedError('username or password is incorrect');
+    return null;
   }
 }

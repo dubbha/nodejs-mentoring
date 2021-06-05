@@ -39,7 +39,7 @@ describe('UsersService', () => {
   });
 
   const id = '123e4567-e89b-12d3-a456-426614174000';
-  const defaultUser = { id, login: 'login', password: 'password', age: 20 };
+  const defaultUser = { id, username: 'user', password: 'password', age: 20 };
 
   it('should create user', async () => {
     jest.spyOn(repository, 'save').mockReturnValue(
@@ -50,12 +50,12 @@ describe('UsersService', () => {
       }),
     );
     const dto = {
-      login: defaultUser.login,
+      username: defaultUser.username,
       password: defaultUser.password,
       age: defaultUser.age,
     };
     expect(await service.create(dto)).toEqual({
-      login: dto.login,
+      username: dto.username,
       age: dto.age,
       id: defaultUser.id,
     });
@@ -66,7 +66,7 @@ describe('UsersService', () => {
   });
 
   it('should update user with a partial DTO', async () => {
-    const dto = { login: 'login2', age: 22 };
+    const dto = { username: 'user2', age: 22 };
     jest.spyOn(repository, 'findOne').mockReturnValue(null);
     await service.update(id, dto);
     expect(repository.update).toBeCalledWith({ id }, dto);
@@ -77,37 +77,37 @@ describe('UsersService', () => {
     expect(repository.softDelete).toBeCalledWith(id);
   });
 
-  it('should find all non-deleted users sorted by login', () => {
+  it('should find all non-deleted users sorted by username', () => {
     service.findAll();
     expect(repository.find).toBeCalledWith({
-      order: { login: 'ASC' },
+      order: { username: 'ASC' },
     });
   });
 
   it('should limit the number of search results', () => {
-    service.findAll('log', 2);
+    service.findAll('user', 2);
     expect(repository.find).toBeCalledWith({
-      order: { login: 'ASC' },
+      order: { username: 'ASC' },
       take: 2,
-      where: { login: ILike('%log%') },
+      where: { username: ILike('%user%') },
     });
   });
 
-  it('should filter results by the loginSubstring', () => {
-    service.findAll('1lo');
+  it('should filter results by the usernameSubstring', () => {
+    service.findAll('1use');
     expect(repository.find).toBeCalledWith({
-      order: { login: 'ASC' },
-      where: { login: ILike('%1lo%') },
+      order: { username: 'ASC' },
+      where: { username: ILike('%1use%') },
     });
   });
 
-  it('should find user by login', () => {
-    service.findOneByLogin('login');
-    expect(repository.findOne).toBeCalledWith({ login: 'login' });
+  it('should find user by username', () => {
+    service.findOneByUsername('user');
+    expect(repository.findOne).toBeCalledWith({ username: 'user' });
   });
 
-  it('should find user by login, expect for user with the provided id', () => {
-    service.findOneByLogin('login', id);
-    expect(repository.findOne).toBeCalledWith({ login: 'login', id: Not(id) });
+  it('should find user by username, expect for user with the provided id', () => {
+    service.findOneByUsername('user', id);
+    expect(repository.findOne).toBeCalledWith({ username: 'user', id: Not(id) });
   });
 });
