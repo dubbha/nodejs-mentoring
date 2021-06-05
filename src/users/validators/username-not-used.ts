@@ -8,27 +8,27 @@ import { UsersService } from '../users.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 
 @ValidatorConstraint({ async: true })
-export class LoginNotUsedConstraint implements ValidatorConstraintInterface {
+export class UsernameNotUsedConstraint implements ValidatorConstraintInterface {
   constructor(private readonly usersService: UsersService) {}
 
-  async validate(login: string) {
-    const found = await this.usersService.findOneByLogin(login);
+  async validate(username: string) {
+    const found = await this.usersService.findOneByUsername(username);
     return !found;
   }
 
   defaultMessage() {
-    return 'login ($value) is already used';
+    return 'username ($value) is already used';
   }
 }
 
-export function LoginNotUsed(validationOptions?: ValidationOptions) {
+export function UsernameNotUsed(validationOptions?: ValidationOptions) {
   return function (object: CreateUserDto, propertyName: string) {
     registerDecorator({
       target: object.constructor,
       propertyName: propertyName,
       options: validationOptions,
       constraints: [],
-      validator: LoginNotUsedConstraint,
+      validator: UsernameNotUsedConstraint,
     });
   };
 }

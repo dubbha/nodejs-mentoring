@@ -3,10 +3,10 @@ import { IsString, IsNumber, Min, Max, MinLength, Validate } from 'class-validat
 import { ContainsLettersAndNumbers } from '../validators/contains-letters-and-numbers';
 
 export class BaseUserDto {
-  @ApiProperty({ description: 'Login of the user' })
+  @ApiProperty({ description: 'Username of the user', minLength: 3 })
   @IsString()
   @MinLength(3)
-  login: string;
+  username: string;
 
   @ApiProperty({ description: 'Password of the user' })
   @IsString()

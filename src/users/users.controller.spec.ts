@@ -12,7 +12,7 @@ describe('UsersController', () => {
     create: jest.fn(),
     findAll: jest.fn(),
     findOne: jest.fn(),
-    findOneByLogin: jest.fn(),
+    findOneByUsername: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
   } as Partial<UsersService>;
@@ -37,7 +37,7 @@ describe('UsersController', () => {
   });
 
   const id = '123e4567-e89b-12d3-a456-426614174000';
-  const defaultUser = { id, login: 'login', password: 'password', age: 20, isDeleted: false };
+  const defaultUser = { id, username: 'user', password: 'password', age: 20, isDeleted: false };
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
@@ -45,8 +45,8 @@ describe('UsersController', () => {
 
   describe('create', () => {
     it('should create user', () => {
-      const { login, password, age } = defaultUser;
-      const dto = { login, password, age };
+      const { username, password, age } = defaultUser;
+      const dto = { username, password, age };
 
       controller.create(dto);
       expect(service.create).toBeCalledWith(dto);
@@ -54,12 +54,12 @@ describe('UsersController', () => {
   });
 
   describe('findAll', () => {
-    it('should pass loginSubtring and limit if provided', () => {
-      controller.findAll({ loginSubstring: 'sub', limit: 12 });
+    it('should pass usernameSubtring and limit if provided', () => {
+      controller.findAll({ usernameSubstring: 'sub', limit: 12 });
       expect(service.findAll).toBeCalledWith('sub', 12);
     });
 
-    it('should call service with loginSubtring and limit undefined if not provided', () => {
+    it('should call service with usernameSubstring and limit undefined if not provided', () => {
       controller.findAll({});
       expect(service.findAll).toBeCalledWith(undefined, undefined);
     });
@@ -89,10 +89,10 @@ describe('UsersController', () => {
       expect(service.update).toBeCalledWith(id, dto);
     });
 
-    it('should throw if the new login is already used by another user', async () => {
+    it('should throw if the new username is already used by another user', async () => {
       const params = { id };
-      const { age, login } = defaultUser;
-      const dto = { age, login };
+      const { age, username } = defaultUser;
+      const dto = { age, username };
       (service.update as jest.Mock).mockImplementation(() =>
         Promise.reject(new EntityConflictError()),
       );

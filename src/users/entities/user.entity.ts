@@ -7,7 +7,7 @@ export class User {
   id: string;
 
   @Column()
-  login: string;
+  username: string;
 
   @Column({ select: false })
   password: string;

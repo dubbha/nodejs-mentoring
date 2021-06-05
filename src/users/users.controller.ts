@@ -2,9 +2,7 @@ import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestj
 import { LoggerService } from '../core/services';
 import { rethrowToHttp } from '../core/errors';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { LoginDto } from './dto/login.dto';
+import { CreateUserDto, UpdateUserDto } from './dto';
 import { FindOneParams } from './params/find-one';
 import { UpdateParams } from './params/update';
 import { RemoveParams } from './params/remove';
@@ -27,11 +25,11 @@ export class UsersController {
   }
 
   @Get()
-  async findAll(@Query() { loginSubstring, limit }: FindAllParams) {
+  async findAll(@Query() { usernameSubstring, limit }: FindAllParams) {
     try {
-      return await this.usersService.findAll(loginSubstring, limit);
+      return await this.usersService.findAll(usernameSubstring, limit);
     } catch (e) {
-      this.logger.controllerMethodError(e, 'GET /', [{ loginSubstring, limit }]);
+      this.logger.controllerMethodError(e, 'GET /', [{ usernameSubstring, limit }]);
       rethrowToHttp(e);
     }
   }
@@ -62,16 +60,6 @@ export class UsersController {
       await this.usersService.remove(id);
     } catch (e) {
       this.logger.controllerMethodError(e, 'DELETE /:id', [{ id }]);
-      rethrowToHttp(e);
-    }
-  }
-
-  @Post('login')
-  async login(@Body() loginDto: LoginDto) {
-    try {
-      return await this.usersService.login(loginDto);
-    } catch (e) {
-      this.logger.controllerMethodError(e, 'POST /login', [loginDto]);
       rethrowToHttp(e);
     }
   }
