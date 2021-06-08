@@ -85,6 +85,8 @@ describe('Users (e2e)', () => {
         .expect(400)
         .expect(
           validationError([
+            'username must be longer than or equal to 3 characters',
+            'username must be a string',
             'password must contain both letters and numbers',
             'password must be longer than or equal to 8 characters',
             'password must be a string',
@@ -97,7 +99,7 @@ describe('Users (e2e)', () => {
   });
 
   describe('PATCH /users/:id', () => {
-    it('should validate CreateUserDto', () => {
+    it('should validate UpdateUserDto', () => {
       return request(app.getHttpServer())
         .patch('/users/123e4567-e89b-12d3-a456-426614174000')
         .set('Accept', 'application/json')
