@@ -63,7 +63,7 @@ export class UsersService {
     });
   }
 
-  async validateUser(username: string, password: string) {
+  async validateUser(username: string, password: string): Promise<User | null> {
     // https://github.com/ranisalt/node-argon2/wiki/Migrating-from-another-hash-function
     const { password: foundPassword, id } = await this.usersRepository.findOne({
       where: { username },
