@@ -9,7 +9,7 @@ import { LogMethodCalls } from '../core/decorators';
 export class AuthService {
   constructor(private usersService: UsersService, private jwtService: JwtService) {}
 
-  async validateUser(username: string, password: string): Promise<any> {
+  async validateUser(username: string, password: string): Promise<User | null> {
     try {
       return await this.usersService.validateUser(username, password);
     } catch {
