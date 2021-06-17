@@ -1,4 +1,4 @@
-# Homework 2
+# In-memory CRUD REST service with validation
 
 In-memory CRUD REST service with validation using [Nest](https://nestjs.com/) instead of [Express](https://expressjs.com/)
 
