@@ -85,12 +85,12 @@ describe('GroupsService', () => {
   describe('findOne', () => {
     it('should find the group by id', async () => {
       const group = { id, ...defaultGroup };
-      jest.spyOn(repository, 'findOne').mockReturnValue(Promise.resolve(group));
+      jest.spyOn(repository, 'findOne').mockResolvedValue(group);
       expect(await service.findOne(id)).toBe(group);
     });
 
     it('should throw EntityNotFoundError if group not found', async () => {
-      jest.spyOn(repository, 'findOne').mockReturnValue(Promise.resolve(null));
+      jest.spyOn(repository, 'findOne').mockResolvedValue(null);
       await expect(service.findOne(id)).rejects.toThrow(EntityNotFoundError);
     });
   });
@@ -106,7 +106,7 @@ describe('GroupsService', () => {
     it('should throw EntityConflictError if name is already used', async () => {
       jest
         .spyOn(service, 'findOneByName')
-        .mockReturnValueOnce(Promise.resolve({ ...defaultGroup, id: 'another-id-same-name' }));
+        .mockResolvedValue({ ...defaultGroup, id: 'another-id-same-name' });
       const dto = { name: 'non-unique-name' };
       await expect(service.update(id, dto)).rejects.toThrow(EntityConflictError);
     });
@@ -139,28 +139,22 @@ describe('GroupsService', () => {
 
   describe('addUsers', () => {
     it('should add users to group', async () => {
-      jest
-        .spyOn(repository, 'findOne')
-        .mockReturnValue(Promise.resolve({ id, ...defaultGroup, users: [] }));
+      jest.spyOn(repository, 'findOne').mockResolvedValue({ id, ...defaultGroup, users: [] });
 
       jest
         .spyOn(usersRepository, 'findOne')
-        .mockReturnValueOnce(
-          Promise.resolve({
-            id: 'user1-id',
-            username: 'user1',
-            password: 'password1',
-            age: 21,
-          }),
-        )
-        .mockReturnValueOnce(
-          Promise.resolve({
-            id: 'user2-id',
-            username: 'user2',
-            password: 'password2',
-            age: 21,
-          }),
-        );
+        .mockResolvedValueOnce({
+          id: 'user1-id',
+          username: 'user1',
+          password: 'password1',
+          age: 21,
+        })
+        .mockResolvedValueOnce({
+          id: 'user2-id',
+          username: 'user2',
+          password: 'password2',
+          age: 21,
+        });
       const transaction = jest.fn(async asyncCallback => await asyncCallback({ save: jest.fn() }));
       jest
         .spyOn(typeorm, 'getConnection')
@@ -178,9 +172,7 @@ describe('GroupsService', () => {
     });
 
     it('should throw ArgumentsError if all userIds are wrong', async () => {
-      jest
-        .spyOn(repository, 'findOne')
-        .mockReturnValue(Promise.resolve({ id, ...defaultGroup, users: [] }));
+      jest.spyOn(repository, 'findOne').mockResolvedValue({ id, ...defaultGroup, users: [] });
 
       jest
         .spyOn(usersRepository, 'findOne')

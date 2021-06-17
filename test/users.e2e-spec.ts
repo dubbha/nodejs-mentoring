@@ -55,7 +55,7 @@ describe('Users (e2e)', () => {
 
   describe('GET /users', () => {
     it('should return empty users list', () => {
-      jest.spyOn(repository, 'find').mockImplementationOnce(() => Promise.resolve([]));
+      jest.spyOn(repository, 'find').mockResolvedValue([]);
       return request(app.getHttpServer()).get('/users').expect(200).expect([]);
     });
 
