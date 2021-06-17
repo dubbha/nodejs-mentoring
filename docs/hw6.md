@@ -1,6 +1,4 @@
-# Homework 6
-
-JWT Authorization & CORS
+# JWT Authorization & CORS
 
 **Login Failure**
 

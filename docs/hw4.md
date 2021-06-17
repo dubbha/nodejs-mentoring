@@ -1,6 +1,4 @@
-# Homework 4
-
-Second entity and Many-to-Many entity relationships
+# Second entity and Many-to-Many entity relationships
 
 - GroupsModule
 - ManyToMany relation between Group and User enitites

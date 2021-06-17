@@ -1,4 +1,4 @@
-# Homework 3
+# PostgreSQL and Layered Architecture
 
 PostgreSQL and Layered Architecture using [TypeORM](https://typeorm.io/)
 

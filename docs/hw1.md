@@ -1,4 +1,5 @@
-# Homework 1
+# Basics. Node.js fundamental theory
+
 Run the below commands from within the `hw1` directory
 ```
 [/] cd hw1
