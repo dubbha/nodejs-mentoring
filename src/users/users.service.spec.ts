@@ -1,8 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository, Not, ILike } from 'typeorm';
+import { HashService } from 'core/services';
+import { EntityNotFoundError, EntityConflictError } from 'core/errors';
 import { UsersService } from './users.service';
-import { HashService } from '../core/services';
 import { User } from './entities/user.entity';
 
 describe('UsersService', () => {
@@ -14,12 +15,19 @@ describe('UsersService', () => {
     update: jest.fn(),
     softDelete: jest.fn(),
   } as Partial<Repository<User>>;
+  const hashService = {
+    hash: jest.fn(),
+    verify: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UsersService,
-        HashService,
+        {
+          provide: HashService,
+          useValue: hashService,
+        },
         {
           provide: getRepositoryToken(User),
           useValue: repository,
@@ -49,6 +57,7 @@ describe('UsersService', () => {
         deletedAt: null,
       }),
     );
+    jest.spyOn(hashService, 'hash').mockImplementationOnce(password => `$argon2id$${password}`);
     const dto = {
       username: defaultUser.username,
       password: defaultUser.password,
@@ -109,5 +118,52 @@ describe('UsersService', () => {
   it('should find user by username, expect for user with the provided id', () => {
     service.findOneByUsername('user', id);
     expect(repository.findOne).toBeCalledWith({ username: 'user', id: Not(id) });
+  });
+
+  it('should find user by id', async () => {
+    jest.spyOn(repository, 'findOne').mockReturnValue(Promise.resolve(defaultUser));
+    const result = await service.findOne(id);
+    expect(repository.findOne).toBeCalledWith({ id });
+    expect(result).toBe(defaultUser);
+  });
+
+  it('should throw EntityNotFoundError if user was not found', async () => {
+    jest.spyOn(repository, 'findOne').mockReturnValue(Promise.resolve(undefined));
+    await expect(service.findOne(id)).rejects.toThrow(EntityNotFoundError);
+  });
+
+  it('should throw EntityConflictError when trying to change a username to the already existing one', async () => {
+    jest.spyOn(repository, 'findOne').mockReturnValue(Promise.resolve(defaultUser));
+    const dto = { username: 'user', age: 22 };
+    await expect(service.update(id, dto)).rejects.toThrow(EntityConflictError);
+  });
+
+  it('should validate user with hashed password', async () => {
+    const user = { ...defaultUser, password: '$argon2id$hashedPassword' };
+    jest.spyOn(hashService, 'verify').mockReturnValue(true);
+    jest.spyOn(repository, 'findOne').mockReturnValue(Promise.resolve(user));
+    expect(await service.validateUser('user', '$argon2id$hashedPassword')).toEqual(user);
+  });
+
+  it('should validate user with plain passwords and rehash', async () => {
+    const user = { ...defaultUser, password: 'plainPassword' };
+    jest.spyOn(hashService, 'verify').mockReturnValue(true);
+    jest.spyOn(repository, 'findOne').mockReturnValue(Promise.resolve(user));
+    jest.spyOn(service, 'update');
+    expect(await service.validateUser('user', 'plainPassword')).toEqual(user);
+    expect(service.update).toBeCalledWith(defaultUser.id, { password: `plainPassword` });
+  });
+
+  it('should return null if username or hashed password is wrong', async () => {
+    const user = { ...defaultUser, password: '$argon2id$unknown' };
+    jest.spyOn(repository, 'findOne').mockReturnValue(Promise.resolve(user));
+    jest.spyOn(hashService, 'verify').mockReturnValue(false);
+    expect(await service.validateUser('user', '$argon2id$unknown')).toBeNull();
+  });
+
+  it('should return null if username or plain password is wrong', async () => {
+    jest.spyOn(repository, 'findOne').mockReturnValue(Promise.resolve(defaultUser));
+    jest.spyOn(hashService, 'verify').mockReturnValue(false);
+    expect(await service.validateUser('user', 'unknown')).toBeNull();
   });
 });

@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 import { useContainer } from 'class-validator';
 import * as helmet from 'helmet';
 import * as compression from 'compression';
@@ -13,7 +14,11 @@ async function bootstrap() {
   app.use(helmet());
   app.use(compression());
 
-  app.enableCors({ origin: ['http://localhost:3000'] });
+  const configService = app.get(ConfigService);
+  const host = configService.get<string>('HOST');
+  const port = configService.get<number>('PORT');
+
+  app.enableCors({ origin: [`http://${host}:${port}`] });
 
   app.useGlobalPipes(new ValidationPipe());
 
@@ -38,6 +43,6 @@ async function bootstrap() {
     logger.error(`Unhandled Promise Rejection at ${promise}, reason: ${reason}`);
   });
 
-  await app.listen(3000);
+  await app.listen(port);
 }
 bootstrap();

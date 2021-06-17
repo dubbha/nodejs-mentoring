@@ -1,5 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, ManyToMany } from 'typeorm';
-import { Group } from '../../groups/entities';
+import { Group } from 'groups/entities';
 
 @Entity()
 export class User {
