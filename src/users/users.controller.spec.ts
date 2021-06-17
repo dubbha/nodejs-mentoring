@@ -85,14 +85,12 @@ describe('UsersController', () => {
 
   describe('findOne', () => {
     it('should return user by id if found', async () => {
-      (service.findOne as jest.Mock).mockImplementation(() => Promise.resolve(defaultUser));
+      (service.findOne as jest.Mock).mockResolvedValue(defaultUser);
       expect(await controller.findOne({ id })).toBe(defaultUser);
     });
 
     it('should throw NotFoundException if user not found', async () => {
-      (service.findOne as jest.Mock).mockImplementation(() =>
-        Promise.reject(new EntityNotFoundError()),
-      );
+      (service.findOne as jest.Mock).mockRejectedValue(new EntityNotFoundError());
       await expect(controller.findOne({ id })).rejects.toThrow(NotFoundException);
     });
   });
@@ -111,9 +109,7 @@ describe('UsersController', () => {
       const params = { id };
       const { age, username } = defaultUser;
       const dto = { age, username };
-      (service.update as jest.Mock).mockImplementation(() =>
-        Promise.reject(new EntityConflictError()),
-      );
+      (service.update as jest.Mock).mockRejectedValue(new EntityConflictError());
 
       await expect(controller.update(params, dto)).rejects.toThrow(ConflictException);
     });

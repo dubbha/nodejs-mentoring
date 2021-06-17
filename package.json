@@ -102,7 +102,9 @@
       "index.ts",
       "validators",
       "entities",
-      "configuration.ts"
+      "configuration.ts",
+      "guard.ts",
+      "strategy.ts"
     ]
   }
 }

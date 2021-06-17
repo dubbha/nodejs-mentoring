@@ -1,9 +1,4 @@
-import {
-  NotFoundException,
-  ConflictException,
-  BadRequestException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 
 // Service Layer: business logic errors
 export class EntityNotFoundError extends Error {}
@@ -20,8 +15,6 @@ export const rethrowToHttp = (e: Error) => {
       throw new ConflictException(e.message);
     case ArgumentsError:
       throw new BadRequestException(e.message);
-    case UnauthorizedError:
-      throw new UnauthorizedException(e.message);
     default:
       throw e; // InternalServerErrorException
   }

@@ -50,13 +50,11 @@ describe('UsersService', () => {
   const defaultUser = { id, username: 'user', password: 'password', age: 20 };
 
   it('should create user', async () => {
-    jest.spyOn(repository, 'save').mockReturnValue(
-      Promise.resolve({
-        ...defaultUser,
-        password: 'hashedPasswordToBeOmittedFromResponse',
-        deletedAt: null,
-      }),
-    );
+    jest.spyOn(repository, 'save').mockResolvedValue({
+      ...defaultUser,
+      password: 'hashedPasswordToBeOmittedFromResponse',
+      deletedAt: null,
+    });
     jest.spyOn(hashService, 'hash').mockImplementationOnce(password => `$argon2id$${password}`);
     const dto = {
       username: defaultUser.username,
@@ -121,19 +119,19 @@ describe('UsersService', () => {
   });
 
   it('should find user by id', async () => {
-    jest.spyOn(repository, 'findOne').mockReturnValue(Promise.resolve(defaultUser));
+    jest.spyOn(repository, 'findOne').mockResolvedValue(defaultUser);
     const result = await service.findOne(id);
     expect(repository.findOne).toBeCalledWith({ id });
     expect(result).toBe(defaultUser);
   });
 
   it('should throw EntityNotFoundError if user was not found', async () => {
-    jest.spyOn(repository, 'findOne').mockReturnValue(Promise.resolve(undefined));
+    jest.spyOn(repository, 'findOne').mockResolvedValue(undefined);
     await expect(service.findOne(id)).rejects.toThrow(EntityNotFoundError);
   });
 
   it('should throw EntityConflictError when trying to change a username to the already existing one', async () => {
-    jest.spyOn(repository, 'findOne').mockReturnValue(Promise.resolve(defaultUser));
+    jest.spyOn(repository, 'findOne').mockResolvedValue(defaultUser);
     const dto = { username: 'user', age: 22 };
     await expect(service.update(id, dto)).rejects.toThrow(EntityConflictError);
   });
@@ -141,14 +139,14 @@ describe('UsersService', () => {
   it('should validate user with hashed password', async () => {
     const user = { ...defaultUser, password: '$argon2id$hashedPassword' };
     jest.spyOn(hashService, 'verify').mockReturnValue(true);
-    jest.spyOn(repository, 'findOne').mockReturnValue(Promise.resolve(user));
+    jest.spyOn(repository, 'findOne').mockResolvedValue(user);
     expect(await service.validateUser('user', '$argon2id$hashedPassword')).toEqual(user);
   });
 
   it('should validate user with plain passwords and rehash', async () => {
     const user = { ...defaultUser, password: 'plainPassword' };
     jest.spyOn(hashService, 'verify').mockReturnValue(true);
-    jest.spyOn(repository, 'findOne').mockReturnValue(Promise.resolve(user));
+    jest.spyOn(repository, 'findOne').mockResolvedValue(user);
     jest.spyOn(service, 'update');
     expect(await service.validateUser('user', 'plainPassword')).toEqual(user);
     expect(service.update).toBeCalledWith(defaultUser.id, { password: `plainPassword` });
@@ -156,13 +154,13 @@ describe('UsersService', () => {
 
   it('should return null if username or hashed password is wrong', async () => {
     const user = { ...defaultUser, password: '$argon2id$unknown' };
-    jest.spyOn(repository, 'findOne').mockReturnValue(Promise.resolve(user));
+    jest.spyOn(repository, 'findOne').mockResolvedValue(user);
     jest.spyOn(hashService, 'verify').mockReturnValue(false);
     expect(await service.validateUser('user', '$argon2id$unknown')).toBeNull();
   });
 
   it('should return null if username or plain password is wrong', async () => {
-    jest.spyOn(repository, 'findOne').mockReturnValue(Promise.resolve(defaultUser));
+    jest.spyOn(repository, 'findOne').mockResolvedValue(defaultUser);
     jest.spyOn(hashService, 'verify').mockReturnValue(false);
     expect(await service.validateUser('user', 'unknown')).toBeNull();
   });

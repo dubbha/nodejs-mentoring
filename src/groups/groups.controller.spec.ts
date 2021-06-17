@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, ConflictException } from '@nestjs/common';
+import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { LoggerService } from 'core/services';
-import { EntityNotFoundError, EntityConflictError } from 'core/errors';
+import { EntityNotFoundError, EntityConflictError, ArgumentsError } from 'core/errors';
 import { GroupsController } from './groups.controller';
 import { GroupsService } from './groups.service';
 import { Permission } from './enums';
@@ -78,14 +78,12 @@ describe('GroupsController', () => {
 
   describe('findOne', () => {
     it('should return group by id if found', async () => {
-      (service.findOne as jest.Mock).mockImplementation(() => Promise.resolve(defaultGroup));
+      (service.findOne as jest.Mock).mockResolvedValue(defaultGroup);
       expect(await controller.findOne({ id })).toBe(defaultGroup);
     });
 
     it('should throw NotFoundException if group not found', async () => {
-      (service.findOne as jest.Mock).mockImplementation(() =>
-        Promise.reject(new EntityNotFoundError()),
-      );
+      (service.findOne as jest.Mock).mockRejectedValue(new EntityNotFoundError());
       await expect(controller.findOne({ id })).rejects.toThrow(NotFoundException);
     });
   });
@@ -104,9 +102,7 @@ describe('GroupsController', () => {
       const params = { id };
       const { name } = defaultGroup;
       const dto = { name };
-      (service.update as jest.Mock).mockImplementation(() =>
-        Promise.reject(new EntityConflictError()),
-      );
+      (service.update as jest.Mock).mockRejectedValue(new EntityConflictError());
 
       await expect(controller.update(params, dto)).rejects.toThrow(ConflictException);
     });
@@ -139,10 +135,10 @@ describe('GroupsController', () => {
     });
 
     it('should log and rethrow to HTTP on error', async () => {
-      const err = new Error('error');
+      const err = new ArgumentsError('error');
       jest.spyOn(service, 'addUsers').mockRejectedValueOnce(err);
 
-      await expect(controller.addUsers(params, dto)).rejects.toThrow(err);
+      await expect(controller.addUsers(params, dto)).rejects.toThrow(BadRequestException);
       expect(loggerService.controllerMethodError).toBeCalledWith(err, 'POST /:id/add-users', [
         { id },
         dto,
