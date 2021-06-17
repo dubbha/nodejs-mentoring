@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body } from '@nestjs/common';
-import { LoggerService } from '../core/services';
-import { rethrowToHttp } from '../core/errors';
+import { LoggerService } from 'core/services';
+import { rethrowToHttp } from 'core/errors';
 import { GroupsService } from './groups.service';
 import { CreateGroupDto, UpdateGroupDto, AddUsersDto } from './dto';
 import { FindOneParams, UpdateParams, RemoveParams, AddUsersParams } from './params';

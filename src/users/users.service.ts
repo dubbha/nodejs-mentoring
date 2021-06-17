@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not, ILike } from 'typeorm';
-import { HashService } from '../core/services';
-import { LogMethodCalls } from '../core/decorators';
+import { HashService } from 'core/services';
+import { LogMethodCalls } from 'core/decorators';
+import { EntityNotFoundError, EntityConflictError } from 'core/errors';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { User } from './entities/user.entity';
-import { EntityNotFoundError, EntityConflictError } from '../core/errors';
 
 @Injectable()
 @LogMethodCalls()
@@ -76,7 +76,7 @@ export class UsersService {
       }
     } else {
       if (foundPassword === password) {
-        await this.update(foundPassword, { password }); // rehash
+        await this.update(id, { password }); // rehash
         return await this.usersRepository.findOne(id);
       }
     }

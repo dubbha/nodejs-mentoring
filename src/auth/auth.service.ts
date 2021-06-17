@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UsersService } from '../users/users.service';
-import { User } from '../users/entities';
-import { LogMethodCalls } from '../core/decorators';
+import { LogMethodCalls } from 'core/decorators';
+import { UsersService } from 'users/users.service';
+import { User } from 'users/entities';
 
 @Injectable()
 @LogMethodCalls()

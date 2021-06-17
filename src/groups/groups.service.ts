@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not, getConnection } from 'typeorm';
-import { EntityNotFoundError, ArgumentsError, EntityConflictError } from '../core/errors';
-import { LogMethodCalls } from '../core/decorators';
-import { User } from '../users/entities';
+import { EntityNotFoundError, ArgumentsError, EntityConflictError } from 'core/errors';
+import { LogMethodCalls } from 'core/decorators';
+import { User } from 'users/entities';
 import { Group } from './entities';
 import { CreateGroupDto, UpdateGroupDto, AddUsersDto } from './dto';
 

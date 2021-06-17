@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { EntityConflictError, EntityNotFoundError } from '../core/errors';
-import { LoggerService } from '../core/services';
+import { EntityConflictError, EntityNotFoundError } from 'core/errors';
+import { LoggerService } from 'core/services';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
@@ -51,6 +51,15 @@ describe('UsersController', () => {
       controller.create(dto);
       expect(service.create).toBeCalledWith(dto);
     });
+
+    it('should log and rethrow to HTTP on error', async () => {
+      const err = new Error('error');
+      jest.spyOn(service, 'create').mockRejectedValueOnce(err);
+      const dto = { ...defaultUser };
+
+      await expect(controller.create(dto)).rejects.toThrow(err);
+      expect(loggerService.controllerMethodError).toBeCalledWith(err, 'POST /', [dto]);
+    });
   });
 
   describe('findAll', () => {
@@ -62,6 +71,15 @@ describe('UsersController', () => {
     it('should call service with usernameSubstring and limit undefined if not provided', () => {
       controller.findAll({});
       expect(service.findAll).toBeCalledWith(undefined, undefined);
+    });
+
+    it('should log and rethrow to HTTP on error', async () => {
+      const err = new Error('error');
+      jest.spyOn(service, 'findAll').mockRejectedValueOnce(err);
+      const dto = { ...defaultUser };
+
+      await expect(controller.findAll({})).rejects.toThrow(err);
+      expect(loggerService.controllerMethodError).toBeCalledWith(err, 'POST /', [dto]);
     });
   });
 
@@ -107,6 +125,14 @@ describe('UsersController', () => {
 
       controller.remove(params);
       expect(service.remove).toBeCalledWith(params.id);
+    });
+
+    it('should log and rethrow to HTTP on error', async () => {
+      const err = new Error('error');
+      jest.spyOn(service, 'remove').mockRejectedValueOnce(err);
+
+      await expect(controller.remove({ id })).rejects.toThrow(err);
+      expect(loggerService.controllerMethodError).toBeCalledWith(err, 'DELETE /:id', [{ id }]);
     });
   });
 });

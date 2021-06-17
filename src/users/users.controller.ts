@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
-import { LoggerService } from '../core/services';
-import { rethrowToHttp } from '../core/errors';
+import { LoggerService } from 'core/services';
+import { rethrowToHttp } from 'core/errors';
 import { UsersService } from './users.service';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { FindOneParams } from './params/find-one';
