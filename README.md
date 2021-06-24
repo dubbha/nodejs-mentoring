@@ -6,4 +6,4 @@
 - [Homework 4 — Second entity and Many-to-Many entity relationships](docs/hw4.md)
 - [Homework 5 — Logging & Error Handling](docs/hw5.md)
 - [Homework 6 — JWT Authorization & CORS](docs/hw6.md)
-- [Homework 7 — Unit Tests & Config](docs/hw6.md)
+- [Homework 7 — Unit Tests & Config](docs/hw7.md)
